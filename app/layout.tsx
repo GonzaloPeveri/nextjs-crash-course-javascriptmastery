@@ -24,23 +24,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${schibstedGrotesk.variable} ${martianMono.variable} min-h-screen antialiased`}
       >
-        <LightRays
-          raysOrigin="top-center-offset"
-          raysColor="#00ffff"
-          raysSpeed={0.5}
-          lightSpread={0.9}
-          rayLength={1.4}
-          followMouse={true}
-          mouseInfluence={0.1}
-          noiseAmount={0.1}
-          distortion={0.05}
-          className="custom-rays"
-        />
-        {children}
+        <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
+          <LightRays
+            raysOrigin="top-center-offset"
+            raysColor="#00ffff"
+            raysSpeed={0.5}
+            lightSpread={0.9}
+            rayLength={1.4}
+            followMouse={true}
+            mouseInfluence={0.1}
+            noiseAmount={0.1}
+            distortion={0.05}
+            className="custom-rays"
+          />
+        </div>
+        <main>
+          {children}
+        </main>
       </body>
     </html>
   );
