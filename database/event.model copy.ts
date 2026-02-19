@@ -110,7 +110,7 @@ const EventSchema = new Schema<IEvent>(
 );
 
 // Pre-save hook for slug generation and data normalization
-EventSchema.pre('save', async function () {
+EventSchema.pre('save', function (next) {
   const event = this as IEvent;
 
   // Generate slug only if title changed or document is new
@@ -127,6 +127,8 @@ EventSchema.pre('save', async function () {
   if (event.isModified('time')) {
     event.time = normalizeTime(event.time);
   }
+
+  next();
 });
 
 // Helper function to generate URL-friendly slug
