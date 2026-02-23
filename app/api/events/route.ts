@@ -8,7 +8,6 @@ import { v2 as cloudinary } from "cloudinary";
 
 export async function POST(req: NextRequest) {
     try {
-        console.log("hello world");
         await connectDB();
 
         const formData = await req.formData();
@@ -21,12 +20,15 @@ export async function POST(req: NextRequest) {
         catch (e) {
             console.error("FULL ERROR:", e);
             return NextResponse.json(
-                { message: "Event Creation Failed", error: e?.message || e },
+                { message: "Event Creation Failed", error: e.message || e },
                 { status: 400 }
             );
         }
 
         const file = formData.get('image') as File;
+
+        let tags = JSON.parse(formData.get('tags') as string);
+        let agenda = JSON.parse(formData.get('agenda') as string);
 
         if (!file) {
             return NextResponse.json({ message: 'Image file is required' }, { status: 400 })
@@ -44,7 +46,11 @@ export async function POST(req: NextRequest) {
 
         event.image = (uploadResult as { secure_url: string }).secure_url;
 
-        const createdEvent = await Event.create(event);
+        const createdEvent = await Event.create({
+            ...event,
+            tags: tags,
+            agenda: agenda,
+        });
 
         return NextResponse.json({ message: 'Event created Succesfully', event: createdEvent }, { status: 201 });
     } catch (e) {
