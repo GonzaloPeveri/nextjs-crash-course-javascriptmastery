@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { IEvent } from "@/database";
 import EventCard from "@/components/EventCard";
+import { cacheLife } from "next/cache";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -35,17 +36,43 @@ const EventTags = ({ tags }: { tags: string[] }) => (
 )
 
 const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
+    'use cache'
+    cacheLife('hours');
     const { slug } = await params;
-    const request = await fetch(`${BASE_URL}/api/events/${slug}`);
-    const { event: { description, image, overview, date, time, location, mode, agenda, audience, tags, organizer } } = await request.json();
+
+    let event;
+    try {
+        const request = await fetch(`${BASE_URL}/api/events/${slug}`, {
+            next: { revalidate: 60 }
+        });
+
+        if (!request.ok) {
+            if (request.status === 404) {
+                return notFound();
+            }
+            throw new Error(`Failed to fetch event: ${request.statusText}`);
+        }
+
+
+        const response = await request.json();
+        event = response.event;
+
+        if (!event) {
+            return notFound();
+        }
+    } catch (error) {
+        console.error('Error fetching event: ', error);
+        return notFound();
+    }
+
+
+    const { description, image, overview, date, time, location, mode, agenda, audience, tags, organizer } = event;
 
     if (!description) return notFound();
 
     const bookings = 10;
 
     const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
-
-    console.log({ similarEvents });
 
     return (
         <section id="event">
@@ -56,7 +83,7 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
             <div className="details">
                 {/* Left Side - Event Content */}
                 <div className="content">
-                    <Image src={image} alt="Event Banner" width={800} height={800} />
+                    <Image src={image} alt="Event Banner" width={800} height={800} className="banner" />
 
                     <section className="flex-col-gap-2">
                         <h2>Overview</h2>
@@ -95,8 +122,8 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
                         ) : (
                             <p className="text-sm">Be the first to book your spot!</p>
                         )}
-
-                        <BookEvent />
+                        {/* eventId={event.id} slug={event.slug} it said this but I changed because the other way didn't work*/}
+                        <BookEvent eventId={event._id} slug={event.slug} />
                     </div>
                 </aside>
 
