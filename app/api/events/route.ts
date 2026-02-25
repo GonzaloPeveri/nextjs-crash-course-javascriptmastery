@@ -19,8 +19,16 @@ export async function POST(req: NextRequest) {
 
         catch (e) {
             console.error("FULL ERROR:", e);
+
+            if (e instanceof Error) {
+                return NextResponse.json(
+                    { message: "Event Creation Failed", error: e.message },
+                    { status: 400 }
+                );
+            }
+
             return NextResponse.json(
-                { message: "Event Creation Failed", error: e.message || e },
+                { message: "Event Creation Failed", error: String(e) },
                 { status: 400 }
             );
         }
