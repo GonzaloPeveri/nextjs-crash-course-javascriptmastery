@@ -3,15 +3,13 @@ import ExploreBtn from "@/components/ExploreBtn"
 import { IEvent } from "@/database";
 import { cacheLife } from "next/cache";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-//const BASE_URL = "http://localhost:3000"; // borrar desp, en local anda
+import { getAllEvents } from "@/lib/actions/event.actions";
 
 const page = async () => {
   'use cache';
   cacheLife('minutes');
-  const response = await fetch(`${BASE_URL}/api/events`);
-  const { events } = await response.json();
-  console.log(events); //borrar desp
+
+  const events = await getAllEvents();
   return (
     <section>
       <h1 className="text-center">The Hub for Every Dev<br />Event You Can't Miss</h1>
