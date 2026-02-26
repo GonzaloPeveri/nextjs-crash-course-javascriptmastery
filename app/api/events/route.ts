@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
 
         const file = formData.get('image') as File;
 
-        let tags = JSON.parse(formData.get('tags') as string);
-        let agenda = JSON.parse(formData.get('agenda') as string);
+        const tags = JSON.parse(formData.get('tags') as string);
+        const agenda = JSON.parse(formData.get('agenda') as string);
 
         if (!file) {
             return NextResponse.json({ message: 'Image file is required' }, { status: 400 })
