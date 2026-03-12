@@ -1,52 +1,71 @@
 "use client"
 
 import Image from "next/image"
-import { useState, useEffect } from "react"
-import { getAllEvents } from "@/lib/actions/event.actions"
+import { useState, useEffect, useRef } from "react"
+import { getAllEvents, updateEvent, createEvent } from "@/lib/actions/event.actions"
 
 type Event = {
     _id: string
     title: string
+    slug?: string
     image: string
     visible?: boolean
     description?: string
+    overview?: string
     venue?: string
     location?: string
     date?: string
     time?: string
     mode?: string
     audience?: string
+    agenda?: string[]
     organizer?: string
+    tags?: string[]
 }
 
 export default function AdminPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    async function fetchEvents() {
+        try {
+            const data = await getAllEvents()
+            setEvents(data)
+            if (data && data.length > 0 && !selectedEvent) {
+                setSelectedEvent(data[0])
+            }
+        } catch (error) {
+            console.error("Failed to fetch events:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     useEffect(() => {
-        async function fetchEvents() {
-            try {
-                const data = await getAllEvents()
-                setEvents(data)
-                if (data && data.length > 0) {
-                    setSelectedEvent(data[0])
-                }
-            } catch (error) {
-                console.error("Failed to fetch events:", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
         fetchEvents()
     }, [])
 
     function addEvent() {
         const newEvent = {
-            _id: Date.now().toString(),
+            _id: `new-${Date.now()}`,
             title: "New Event",
             image: "https://via.placeholder.com/400",
-            visible: false
+            visible: false,
+            description: "",
+            overview: "",
+            venue: "",
+            location: "",
+            date: "",
+            time: "",
+            mode: "online",
+            audience: "",
+            agenda: [],
+            organizer: "",
+            tags: []
         }
 
         setEvents([...events, newEvent])
@@ -58,140 +77,398 @@ export default function AdminPage() {
         setSelectedEvent(null)
     }
 
-    function toggleVisibility() {
+    async function toggleVisibility() {
         if (!selectedEvent) return
 
-        const updated = events.map(e =>
-            e._id === selectedEvent._id ? { ...e, visible: !e.visible } : e
-        )
+        const newVisibility = !selectedEvent.visible;
 
+        // Optimistic update for UI
+        const updated = events.map(e =>
+            e._id === selectedEvent._id ? { ...e, visible: newVisibility } : e
+        )
         setEvents(updated)
-        setSelectedEvent({
+
+        const updatedEventData = {
             ...selectedEvent,
-            visible: !selectedEvent.visible
-        })
+            visible: newVisibility
+        }
+        setSelectedEvent(updatedEventData)
+
+        // Database update
+        try {
+            await updateEvent(selectedEvent._id, { visible: newVisibility })
+        } catch (error) {
+            console.error("Failed to update visibility:", error)
+            // Revert optimistic update on error
+            fetchEvents()
+        }
     }
 
-    function updateTitle(title: string) {
-        if (!selectedEvent) return
-        setSelectedEvent({ ...selectedEvent, title })
-    }
-
-    function saveChanges() {
+    function updateField(field: keyof Event, value: any) {
         if (!selectedEvent) return
 
-        const updated = events.map(e =>
-            e._id === selectedEvent._id ? selectedEvent : e
+        const updatedEvent = { ...selectedEvent, [field]: value }
+        setSelectedEvent(updatedEvent)
+
+        const updatedList = events.map(e =>
+            e._id === selectedEvent._id ? updatedEvent : e
         )
+        setEvents(updatedList)
+    }
 
-        setEvents(updated)
-        // Here we would typically call a server action to save the changes to the DB
+    async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        if (!e.target.files || e.target.files.length === 0 || !selectedEvent) return;
+
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+
+        setIsUploading(true);
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Error en la respuesta del servidor");
+            }
+
+            const result = await response.json();
+
+            if (result && result.secure_url) {
+                updateField('image', result.secure_url);
+                alert("Imagen cargada correctamente");
+            } else {
+                alert("La respuesta no contiene una imagen válida");
+            }
+        } catch (error) {
+            console.error("Error al cargar la imagen:", error);
+            alert("Hubo un error al subir la imagen. Mira la consola para más detalles.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    }
+
+    async function saveChanges() {
+        if (!selectedEvent) return
+
+        setIsSaving(true)
+        try {
+            const { _id, createdAt, updatedAt, ...dataToSave } = selectedEvent as any;
+
+            if (_id.startsWith('new-')) {
+                // Determine if we are creating a new event
+                await createEvent(dataToSave);
+            } else {
+                // Otherwise update existing event
+                await updateEvent(_id, dataToSave)
+            }
+
+            alert("Cambios guardados con éxito")
+            await fetchEvents(); // Refresh to catch any server-side generated fields like slugs and real IDs
+        } catch (error) {
+            console.error("Failed to save changes:", error)
+            alert("Error al guardar los cambios")
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     return (
         <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
 
             {/* LEFT PANEL */}
-            <div className="w-1/3 border-r border-gray-200 bg-white p-6 overflow-y-auto shadow-sm">
+            <div className="w-1/3 border-r border-gray-200 bg-white p-6 flex flex-col shadow-sm relative z-20">
 
-                <h2 className="text-2xl font-bold mb-6 text-gray-800">Cursos / Eventos</h2>
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 shrink-0">Cursos / Eventos</h2>
 
                 <button
                     onClick={addEvent}
-                    className="mb-6 w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white font-medium py-2.5 rounded-lg shadow-sm"
+                    className="mb-6 w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white font-medium py-2.5 rounded-lg shadow-sm shrink-0"
                 >
                     + Crear Nuevo Evento
                 </button>
 
                 {isLoading ? (
-                    <div className="flex justify-center p-8">
+                    <div className="flex justify-center p-8 shrink-0">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     </div>
                 ) : events.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">No hay eventos creados todavía.</p>
+                    <p className="text-gray-500 text-center py-4 shrink-0">No hay eventos creados todavía.</p>
                 ) : (
-                    <ul className="space-y-2">
-                        {events.map(event => (
-                            <li
-                                key={event._id}
-                                onClick={() => setSelectedEvent(event)}
-                                className={`p-3 cursor-pointer rounded-lg transition-all duration-200 flex items-center justify-between
-                                    ${selectedEvent?._id === event._id
-                                        ? "bg-blue-50 border border-blue-200 shadow-sm"
-                                        : "hover:bg-gray-50 border border-transparent"}`}
-                            >
-                                <span className={`font-medium ${selectedEvent?._id === event._id ? "text-blue-700" : "text-gray-700"}`}>
-                                    {event.title}
-                                </span>
-                                {event.visible === false && (
-                                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">Oculto</span>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                        <ul className="space-y-2">
+                            {events.map(event => (
+                                <li
+                                    key={event._id}
+                                    onClick={() => {
+                                        if (selectedEvent?._id !== event._id) {
+                                            setSelectedEvent(event)
+                                        }
+                                    }}
+                                    className={`p-3 cursor-pointer rounded-lg transition-all duration-200 flex items-center justify-between
+                                        ${selectedEvent?._id === event._id
+                                            ? "bg-blue-50 border border-blue-200 shadow-sm"
+                                            : "hover:bg-gray-50 border border-transparent"}`}
+                                >
+                                    <span className={`font-medium truncate pr-4 ${selectedEvent?._id === event._id ? "text-blue-700" : "text-gray-700"}`}>
+                                        {event.title || 'Sin Título'}
+                                    </span>
+                                    {event.visible === false && (
+                                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full whitespace-nowrap">Oculto</span>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 )}
-
             </div>
 
             {/* RIGHT PANEL */}
-            <div className="flex-1 p-8 bg-gray-50 overflow-y-auto">
+            <div className="flex-1 bg-gray-50 relative overflow-hidden flex flex-col z-10">
 
                 {selectedEvent ? (
-                    <div className="max-w-3xl mx-auto space-y-6 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex-1 overflow-y-auto p-8 relative">
 
-                        <div className="flex justify-between items-center border-b pb-4">
-                            <h2 className="text-2xl font-bold text-gray-800">Editar Detalle</h2>
-                        </div>
+                        <div className="max-w-3xl mx-auto space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100 relative mb-24">
 
-                        {selectedEvent.image && (
-                            <div className="w-full h-64 relative rounded-xl overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center">
-                                {/* Next.js Image component ideally, but regular img for arbitrary URLs */}
-                                <img
-                                    src={selectedEvent.image.startsWith('http') ? selectedEvent.image : 'https://via.placeholder.com/800x400?text=No+Image'}
-                                    alt={selectedEvent.title}
-                                    className="object-cover w-full h-full"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400?text=Error+Loading+Image'
-                                    }}
-                                />
+                            <div className="flex justify-between items-center border-b pb-4">
+                                <h2 className="text-2xl font-bold text-gray-800">Editar Detalle</h2>
+                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{selectedEvent._id}</span>
                             </div>
-                        )}
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre del evento / curso</label>
+                            {/* Image Section */}
+                            <div className="space-y-3 relative group">
+                                <label className="block text-sm font-semibold text-gray-700">Imagen Principal</label>
+                                {selectedEvent.image && (
+                                    <div className="w-full h-64 relative rounded-xl overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center border border-gray-200 group-hover:opacity-90 transition-opacity">
+                                        <img
+                                            src={selectedEvent.image.startsWith('http') ? selectedEvent.image : 'https://via.placeholder.com/800x400?text=No+Image'}
+                                            alt={selectedEvent.title}
+                                            className="object-cover w-full h-full"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400?text=Error+Loading+Image'
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                            <span className="text-white font-medium px-4 py-2 bg-black/50 rounded-lg">Subir nueva imagen</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <input
-                                    value={selectedEvent.title}
-                                    onChange={(e) => updateTitle(e.target.value)}
-                                    className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
-                                    placeholder="Ej: Curso de React Advanced..."
+                                    type="file"
+                                    accept="image/*"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    className="hidden"
                                 />
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploading}
+                                        className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium rounded-lg border border-blue-200 transition-colors flex items-center disabled:opacity-50"
+                                    >
+                                        {isUploading ? (
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        )}
+                                        Cargar desde PC
+                                    </button>
+
+                                    <input
+                                        value={selectedEvent.image}
+                                        onChange={(e) => updateField('image', e.target.value)}
+                                        className="flex-1 text-sm border-gray-300 rounded-lg bg-gray-50 border p-2 text-gray-500"
+                                        placeholder="URL de la imagen"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Basic Info */}
+                                <div className="space-y-4 md:col-span-2">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre (Title)</label>
+                                        <input
+                                            value={selectedEvent.title}
+                                            onChange={(e) => updateField('title', e.target.value)}
+                                            className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            placeholder="Ej: Curso de React Advanced..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Resumen (Overview)</label>
+                                        <textarea
+                                            value={selectedEvent.overview || ''}
+                                            onChange={(e) => updateField('overview', e.target.value)}
+                                            rows={2}
+                                            className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            placeholder="Breve resumen del evento..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
+                                        <textarea
+                                            value={selectedEvent.description || ''}
+                                            onChange={(e) => updateField('description', e.target.value)}
+                                            rows={5}
+                                            className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            placeholder="Descripción detallada..."
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Date and Time */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-gray-800 border-b pb-2">Fecha y Hora</h3>
+                                    <div>
+                                        <label className="block text-sm text-gray-600 mb-1">Fecha</label>
+                                        <input
+                                            type="date"
+                                            value={selectedEvent.date || ''}
+                                            onChange={(e) => updateField('date', e.target.value)}
+                                            className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-600 mb-1">Hora (Ej: 18:00)</label>
+                                        <input
+                                            type="time"
+                                            value={selectedEvent.time || ''}
+                                            onChange={(e) => updateField('time', e.target.value)}
+                                            className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Location */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-gray-800 border-b pb-2">Ubicación</h3>
+                                    <div>
+                                        <label className="block text-sm text-gray-600 mb-1">Modalidad</label>
+                                        <select
+                                            value={selectedEvent.mode || 'online'}
+                                            onChange={(e) => updateField('mode', e.target.value)}
+                                            className="border border-gray-300 p-2.5 w-full rounded-lg bg-white"
+                                        >
+                                            <option value="online">Online</option>
+                                            <option value="offline">Presencial (Offline)</option>
+                                            <option value="hybrid">Híbrido</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-600 mb-1">Venue (Lugar)</label>
+                                        <input
+                                            value={selectedEvent.venue || ''}
+                                            onChange={(e) => updateField('venue', e.target.value)}
+                                            className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                            placeholder="Ej: YouTube Live / Auditorio..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-600 mb-1">Localización / Link</label>
+                                        <input
+                                            value={selectedEvent.location || ''}
+                                            onChange={(e) => updateField('location', e.target.value)}
+                                            className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                            placeholder="Ej: Url de meet, o dirección..."
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Target & Organizers */}
+                                <div className="space-y-4 md:col-span-2">
+                                    <h3 className="font-medium text-gray-800 border-b pb-2">Detalles Adicionales</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm text-gray-600 mb-1">Organizador</label>
+                                            <input
+                                                value={selectedEvent.organizer || ''}
+                                                onChange={(e) => updateField('organizer', e.target.value)}
+                                                className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-600 mb-1">Audiencia (Audience)</label>
+                                            <input
+                                                value={selectedEvent.audience || ''}
+                                                onChange={(e) => updateField('audience', e.target.value)}
+                                                className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-600 mb-1">Tags (Separados por coma)</label>
+                                            <input
+                                                value={selectedEvent.tags?.join(', ') || ''}
+                                                onChange={(e) => {
+                                                    const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                                                    updateField('tags', tags)
+                                                }}
+                                                className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                                placeholder="Ej: react, frontend, web"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-600 mb-1">Agenda (Separado por coma)</label>
+                                            <input
+                                                value={selectedEvent.agenda?.join(', ') || ''}
+                                                onChange={(e) => {
+                                                    const agenda = e.target.value.split(',').map(a => a.trim()).filter(a => a);
+                                                    updateField('agenda', agenda)
+                                                }}
+                                                className="border border-gray-300 p-2.5 w-full rounded-lg"
+                                                placeholder="Ej: Bienvenida, Parte 1, Q&A"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 pt-6 border-t mt-8">
+                        {/* Floating Action Bar */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20">
+                            <div className="max-w-3xl mx-auto flex flex-wrap gap-4 items-center">
+                                <button
+                                    onClick={saveChanges}
+                                    disabled={isSaving}
+                                    className={`transition-colors text-white font-medium px-8 py-3 rounded-lg shadow-sm flex items-center text-lg
+                                        ${isSaving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-100'}`}
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Guardando...
+                                        </>
+                                    ) : 'Guardar Cambios'}
+                                </button>
 
-                            <button
-                                onClick={saveChanges}
-                                className="bg-green-600 hover:bg-green-700 transition-colors text-white font-medium px-6 py-2.5 rounded-lg shadow-sm"
-                            >
-                                Guardar Cambios
-                            </button>
+                                <button
+                                    onClick={toggleVisibility}
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium px-6 py-3 rounded-lg border border-gray-300 transition-colors"
+                                >
+                                    {selectedEvent.visible === false ? "Mostrar en la web" : "Ocultar en la web"}
+                                </button>
 
-                            <button
-                                onClick={toggleVisibility}
-                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium px-6 py-2.5 rounded-lg border border-gray-300 transition-colors"
-                            >
-                                {selectedEvent.visible === false ? "Mostrar en la web" : "Ocultar en la web"}
-                            </button>
-
-                            <button
-                                onClick={deleteEvent}
-                                className="bg-red-50 text-red-600 hover:bg-red-100 font-medium px-6 py-2.5 rounded-lg border border-red-200 transition-colors ml-auto"
-                            >
-                                Eliminar
-                            </button>
-
+                                <button
+                                    onClick={deleteEvent}
+                                    className="bg-red-50 text-red-600 hover:bg-red-100 font-medium px-6 py-3 rounded-lg border border-red-200 transition-colors ml-auto"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
 
                     </div>
