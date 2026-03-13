@@ -9,6 +9,7 @@ export const getSimilarEventsBySlug = async (slug: string) => {
         await connectDB();
 
         const event = await Event.findOne({ slug });
+        if (!event) return [];
         return await Event.find({ _id: { $ne: event._id }, tags: { $in: event.tags } }).lean();
 
     } catch {
@@ -46,6 +47,7 @@ export const createEvent = async (eventData: any) => {
 
         revalidatePath('/admin');
         revalidatePath('/events');
+        revalidatePath('/');
 
         return JSON.parse(JSON.stringify(newEvent));
     } catch (error) {
@@ -70,6 +72,7 @@ export const updateEvent = async (eventId: string, eventData: any) => {
 
         revalidatePath('/admin');
         revalidatePath('/events');
+        revalidatePath('/');
 
         return JSON.parse(JSON.stringify(updatedEvent));
 

@@ -8,10 +8,15 @@ interface Props {
     location: string;
     date: string;
     time: string;
+    visible: boolean;
 }
 
-const EventCard = ({ title, image, slug, location, date, time }: Props) => {
+const EventCard = ({ title, image, slug, location, date, time, visible }: Props) => {
+    if (!visible) {
+        return;
+    }
     return (
+
         <Link href={`/events/${slug}`} id="event-card">
             <Image src={image} alt={title} width={410} height={300} className="poster" />
 
@@ -23,6 +28,7 @@ const EventCard = ({ title, image, slug, location, date, time }: Props) => {
             <p className="title">{title}</p>
 
             <div className="datetime">
+                <p>{visible ? "visible" : "invisible" /* despues borrar */}</p>
                 <div>
                     <Image src="/icons/calendar.svg" alt="date" width={14} height={14} />
                     <p>{date}</p>

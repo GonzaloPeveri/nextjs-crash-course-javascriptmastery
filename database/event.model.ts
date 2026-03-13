@@ -16,12 +16,17 @@ export interface IEvent extends Document {
   agenda: string[];
   organizer: string;
   tags: string[];
+  visible: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const EventSchema = new Schema<IEvent>(
   {
+    visible: {
+      type: Boolean,
+      default: true,
+    },
     title: {
       type: String,
       required: [true, 'Title is required'],
@@ -182,6 +187,11 @@ EventSchema.index({ slug: 1 }, { unique: true });
 // Create compound index for common queries
 EventSchema.index({ date: 1, mode: 1 });
 
-const Event = models.Event || model<IEvent>('Event', EventSchema);
+// Clear the mongoose model cache to avoid schema caching issues in Next.js development
+if (models.Event) {
+  delete models.Event;
+}
+
+const Event = model<IEvent>('Event', EventSchema);
 
 export default Event;

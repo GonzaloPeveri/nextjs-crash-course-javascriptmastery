@@ -12,7 +12,7 @@ const page = async () => {
   const events = await getAllEvents();
   return (
     <section>
-      <h1 className="text-center">The Hub for Every Dev<br />Event You Can't Miss</h1>
+      <h1 className="text-center">The Hub for Every Dev<br />Event You Can&apos;t Miss</h1>
       <p className="text-center mt-5">Hackatons, Meetups and Conferences, All in One Place</p>
 
       <ExploreBtn />
@@ -21,9 +21,13 @@ const page = async () => {
         <h3>Featured Events</h3>
         <ul className="events">
           {events && events.length > 0 && events.map((event: IEvent) => (
-            <li key={event.title} className="list-none">
-              <EventCard {...event} />
-            </li>
+
+            event.visible ? (
+              <li key={event.title} className="list-none">
+                <EventCard {...event} />
+              </li>
+            ) : null
+
           ))}
         </ul>
       </div>

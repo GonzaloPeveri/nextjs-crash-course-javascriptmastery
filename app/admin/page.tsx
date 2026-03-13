@@ -53,7 +53,7 @@ export default function AdminPage() {
         const newEvent = {
             _id: `new-${Date.now()}`,
             title: "New Event",
-            image: "https://via.placeholder.com/400",
+            image: "https://res.cloudinary.com/dwwplmecd/image/upload/v1773365999/gray_kkswla.png",
             visible: false,
             description: "",
             overview: "",
@@ -80,7 +80,8 @@ export default function AdminPage() {
     async function toggleVisibility() {
         if (!selectedEvent) return
 
-        const newVisibility = !selectedEvent.visible;
+        // Si es undefined, lo consideramos visible, entonces el nuevo estado será oculto (false)
+        const newVisibility = selectedEvent.visible === false ? true : false;
 
         // Optimistic update for UI
         const updated = events.map(e =>
@@ -160,16 +161,18 @@ export default function AdminPage() {
         try {
             const { _id, createdAt, updatedAt, ...dataToSave } = selectedEvent as any;
 
+            let savedEvent;
             if (_id.startsWith('new-')) {
                 // Determine if we are creating a new event
-                await createEvent(dataToSave);
+                savedEvent = await createEvent(dataToSave);
             } else {
                 // Otherwise update existing event
-                await updateEvent(_id, dataToSave)
+                savedEvent = await updateEvent(_id, dataToSave);
             }
 
-            alert("Cambios guardados con éxito")
-            await fetchEvents(); // Refresh to catch any server-side generated fields like slugs and real IDs
+            setSelectedEvent(savedEvent);
+            alert("Cambios guardados con éxito");
+            await fetchEvents(); // Refresh left panel list
         } catch (error) {
             console.error("Failed to save changes:", error)
             alert("Error al guardar los cambios")
@@ -234,7 +237,7 @@ export default function AdminPage() {
                 {selectedEvent ? (
                     <div className="flex-1 overflow-y-auto p-8 relative">
 
-                        <div className="max-w-3xl mx-auto space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100 relative mb-24">
+                        <div className="max-w-3xl mx-auto space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100 relative">
 
                             <div className="flex justify-between items-center border-b pb-4">
                                 <h2 className="text-2xl font-bold text-gray-800">Editar Detalle</h2>
@@ -246,12 +249,13 @@ export default function AdminPage() {
                                 <label className="block text-sm font-semibold text-gray-700">Imagen Principal</label>
                                 {selectedEvent.image && (
                                     <div className="w-full h-64 relative rounded-xl overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center border border-gray-200 group-hover:opacity-90 transition-opacity">
-                                        <img
-                                            src={selectedEvent.image.startsWith('http') ? selectedEvent.image : 'https://via.placeholder.com/800x400?text=No+Image'}
+                                        <Image
+                                            fill
+                                            src={selectedEvent.image.startsWith('http') ? selectedEvent.image : 'https://res.cloudinary.com/dwwplmecd/image/upload/v1773365999/gray_kkswla.png'}
                                             alt={selectedEvent.title}
                                             className="object-cover w-full h-full"
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400?text=Error+Loading+Image'
+                                                (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/dwwplmecd/image/upload/v1773365999/gray_kkswla.png'
                                             }}
                                         />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
@@ -307,22 +311,22 @@ export default function AdminPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Resumen (Overview)</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Resumen (Overview) *</label>
                                         <textarea
                                             value={selectedEvent.overview || ''}
                                             onChange={(e) => updateField('overview', e.target.value)}
                                             rows={2}
-                                            className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            className="resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
                                             placeholder="Breve resumen del evento..."
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa *</label>
                                         <textarea
                                             value={selectedEvent.description || ''}
                                             onChange={(e) => updateField('description', e.target.value)}
                                             rows={5}
-                                            className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            className="resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
                                             placeholder="Descripción detallada..."
                                         />
                                     </div>
@@ -433,11 +437,9 @@ export default function AdminPage() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Floating Action Bar */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20">
-                            <div className="max-w-3xl mx-auto flex flex-wrap gap-4 items-center">
+                            {/* Action Bar (Not Floating) */}
+                            <div className="flex flex-wrap gap-4 items-center pt-8 mt-8 border-t border-gray-100">
                                 <button
                                     onClick={saveChanges}
                                     disabled={isSaving}
@@ -469,6 +471,7 @@ export default function AdminPage() {
                                     Eliminar
                                 </button>
                             </div>
+
                         </div>
 
                     </div>
