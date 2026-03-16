@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { login } from "@/lib/actions/auth.actions";
+import Link from "next/link";
 
 export default function LoginPage() {
     const [state, formAction, isPending] = useActionState(async (prevState: any, formData: FormData) => {
@@ -26,7 +27,7 @@ export default function LoginPage() {
                             name="password"
                             required
                             className="text-black w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                            placeholder="••••••••"
+
                         />
                     </div>
 
@@ -51,9 +52,9 @@ export default function LoginPage() {
                         )}
                     </button>
 
-                    <a href="/" className="block text-center text-sm text-gray-500 hover:text-gray-800 transition-colors mt-4">
+                    <Link href="/" className="block text-center text-sm text-gray-500 hover:text-gray-800 transition-colors mt-4">
                         &larr; Back to home
-                    </a>
+                    </ Link>
                 </form>
             </div>
         </div>

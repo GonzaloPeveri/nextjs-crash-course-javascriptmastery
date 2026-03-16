@@ -7,7 +7,11 @@ export async function login(formData: FormData) {
     const password = formData.get("password");
 
     // Replace with your secure password from environment variables
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword) {
+        throw new Error("ADMIN_PASSWORD is not defined");
+    }
 
     if (password === adminPassword) {
         const cookieStore = await cookies();

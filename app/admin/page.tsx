@@ -341,7 +341,7 @@ export default function AdminPage() {
                                             value={selectedEvent.overview || ''}
                                             onChange={(e) => updateField('overview', e.target.value)}
                                             rows={2}
-                                            className="resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            className="resize-none h-60 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
                                             placeholder="Brief summary of the event..."
                                         />
                                     </div>
@@ -351,7 +351,7 @@ export default function AdminPage() {
                                             value={selectedEvent.description || ''}
                                             onChange={(e) => updateField('description', e.target.value)}
                                             rows={5}
-                                            className="resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
+                                            className="resize-none h-60 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
                                             placeholder="Detailed description..."
                                         />
                                     </div>
