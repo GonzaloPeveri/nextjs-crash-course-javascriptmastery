@@ -25,7 +25,7 @@ export async function login(formData: FormData) {
         redirect("/admin");
     }
 
-    return { error: "Contraseña incorrecta" };
+    return { error: "Incorrect password" };
 }
 
 export async function logout() {

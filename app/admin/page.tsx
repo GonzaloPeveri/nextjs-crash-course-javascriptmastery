@@ -75,7 +75,7 @@ export default function AdminPage() {
     async function handleDeleteEvent() {
         if (!selectedEvent) return;
 
-        const isConfirmed = window.confirm("¿Estás seguro de que quieres eliminar este evento permanentemente? Esta acción no se puede deshacer.");
+        const isConfirmed = window.confirm("Are you sure you want to permanently delete this event? This action cannot be undone.");
         if (!isConfirmed) return;
 
         // If the event exists in the database (not just a local draft), remove it from DB
@@ -84,7 +84,7 @@ export default function AdminPage() {
                 await deleteEvent(selectedEvent._id);
             } catch (error) {
                 console.error("Failed to delete event:", error);
-                alert("Hubo un error al eliminar el evento de la base de datos.");
+                alert("There was an error deleting the event from the database.");
                 return;
             }
         }
@@ -97,7 +97,7 @@ export default function AdminPage() {
     async function toggleVisibility() {
         if (!selectedEvent) return
 
-        // Si es undefined, lo consideramos visible, entonces el nuevo estado será oculto (false)
+        // If undefined, we consider it visible, so the new state will be hidden (false)
         const newVisibility = selectedEvent.visible === false ? true : false;
 
         // Optimistic update for UI
@@ -149,20 +149,20 @@ export default function AdminPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Error en la respuesta del servidor");
+                throw new Error("Server response error");
             }
 
             const result = await response.json();
 
             if (result && result.secure_url) {
                 updateField('image', result.secure_url);
-                alert("Imagen cargada correctamente");
+                alert("Image uploaded successfully");
             } else {
-                alert("La respuesta no contiene una imagen válida");
+                alert("The response does not contain a valid image");
             }
         } catch (error) {
-            console.error("Error al cargar la imagen:", error);
-            alert("Hubo un error al subir la imagen. Mira la consola para más detalles.");
+            console.error("Error uploading image:", error);
+            alert("There was an error uploading the image. Check the console for more details.");
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) {
@@ -188,11 +188,11 @@ export default function AdminPage() {
             }
 
             setSelectedEvent(savedEvent);
-            alert("Cambios guardados con éxito");
+            alert("Changes saved successfully");
             await fetchEvents(); // Refresh left panel list
         } catch (error) {
             console.error("Failed to save changes:", error)
-            alert("Error al guardar los cambios")
+            alert("Error saving changes")
         } finally {
             setIsSaving(false)
         }
@@ -205,12 +205,12 @@ export default function AdminPage() {
             <div className="w-1/3 border-r border-gray-200 bg-white p-6 flex flex-col shadow-sm relative z-20">
 
                 <div className="flex justify-between items-center mb-6 shrink-0">
-                    <h2 className="text-2xl font-bold text-gray-800">Cursos / Eventos</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Events</h2>
                     <button
                         onClick={async () => await logout()}
                         className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors px-3 py-1.5 rounded-lg border border-gray-200 hover:border-red-200 hover:bg-red-50"
                     >
-                        Cerrar Sesión
+                        Logout
                     </button>
                 </div>
 
@@ -218,7 +218,7 @@ export default function AdminPage() {
                     onClick={addEvent}
                     className="mb-6 w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white font-medium py-2.5 rounded-lg shadow-sm shrink-0"
                 >
-                    + Crear Nuevo Evento
+                    + Create New Event
                 </button>
 
                 {isLoading ? (
@@ -226,7 +226,7 @@ export default function AdminPage() {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     </div>
                 ) : events.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4 shrink-0">No hay eventos creados todavía.</p>
+                    <p className="text-gray-500 text-center py-4 shrink-0">No events created yet.</p>
                 ) : (
                     <div className="flex-1 overflow-y-auto pr-2 -mr-2">
                         <ul className="space-y-2">
@@ -244,10 +244,10 @@ export default function AdminPage() {
                                             : "hover:bg-gray-50 border border-transparent"}`}
                                 >
                                     <span className={`font-medium truncate pr-4 ${selectedEvent?._id === event._id ? "text-blue-700" : "text-gray-700"}`}>
-                                        {event.title || 'Sin Título'}
+                                        {event.title || 'Untitled'}
                                     </span>
                                     {event.visible === false && (
-                                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full whitespace-nowrap">Oculto</span>
+                                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full whitespace-nowrap">Hidden</span>
                                     )}
                                 </li>
                             ))}
@@ -265,13 +265,13 @@ export default function AdminPage() {
                         <div className="max-w-3xl mx-auto space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100 relative">
 
                             <div className="flex justify-between items-center border-b pb-4">
-                                <h2 className="text-2xl font-bold text-gray-800">Editar Detalle</h2>
+                                <h2 className="text-2xl font-bold text-gray-800">Edit Details</h2>
                                 <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{selectedEvent._id}</span>
                             </div>
 
                             {/* Image Section */}
                             <div className="space-y-3 relative group">
-                                <label className="block text-sm font-semibold text-gray-700">Imagen Principal</label>
+                                <label className="block text-sm font-semibold text-gray-700">Main Image</label>
                                 {selectedEvent.image && (
                                     <div className="w-full h-64 relative rounded-xl overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center border border-gray-200 group-hover:opacity-90 transition-opacity">
                                         <Image
@@ -284,7 +284,7 @@ export default function AdminPage() {
                                             }}
                                         />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                            <span className="text-white font-medium px-4 py-2 bg-black/50 rounded-lg">Subir nueva imagen</span>
+                                            <span className="text-white font-medium px-4 py-2 bg-black/50 rounded-lg">Upload new image</span>
                                         </div>
                                     </div>
                                 )}
@@ -311,14 +311,14 @@ export default function AdminPage() {
                                         ) : (
                                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                         )}
-                                        Cargar desde PC
+                                        Upload from PC
                                     </button>
 
                                     <input
                                         value={selectedEvent.image}
                                         onChange={(e) => updateField('image', e.target.value)}
                                         className="flex-1 text-sm border-gray-300 rounded-lg bg-gray-50 border p-2 text-gray-500"
-                                        placeholder="URL de la imagen"
+                                        placeholder="Image URL"
                                     />
                                 </div>
                             </div>
