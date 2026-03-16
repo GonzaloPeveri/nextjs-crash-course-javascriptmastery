@@ -2,7 +2,8 @@
 
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
-import { getAllEvents, updateEvent, createEvent } from "@/lib/actions/event.actions"
+import { getAllEvents, updateEvent, createEvent, deleteEvent } from "@/lib/actions/event.actions"
+import { logout } from "@/lib/actions/auth.actions"
 
 type Event = {
     _id: string
@@ -71,10 +72,26 @@ export default function AdminPage() {
         setEvents([...events, newEvent])
     }
 
-    function deleteEvent() {
-        if (!selectedEvent) return
-        setEvents(events.filter(e => e._id !== selectedEvent._id))
-        setSelectedEvent(null)
+    async function handleDeleteEvent() {
+        if (!selectedEvent) return;
+
+        const isConfirmed = window.confirm("¿Estás seguro de que quieres eliminar este evento permanentemente? Esta acción no se puede deshacer.");
+        if (!isConfirmed) return;
+
+        // If the event exists in the database (not just a local draft), remove it from DB
+        if (!selectedEvent._id.startsWith('new-')) {
+            try {
+                await deleteEvent(selectedEvent._id);
+            } catch (error) {
+                console.error("Failed to delete event:", error);
+                alert("Hubo un error al eliminar el evento de la base de datos.");
+                return;
+            }
+        }
+
+        // Remove from the local UI state
+        setEvents(events.filter(e => e._id !== selectedEvent._id));
+        setSelectedEvent(null);
     }
 
     async function toggleVisibility() {
@@ -187,7 +204,15 @@ export default function AdminPage() {
             {/* LEFT PANEL */}
             <div className="w-1/3 border-r border-gray-200 bg-white p-6 flex flex-col shadow-sm relative z-20">
 
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 shrink-0">Cursos / Eventos</h2>
+                <div className="flex justify-between items-center mb-6 shrink-0">
+                    <h2 className="text-2xl font-bold text-gray-800">Cursos / Eventos</h2>
+                    <button
+                        onClick={async () => await logout()}
+                        className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors px-3 py-1.5 rounded-lg border border-gray-200 hover:border-red-200 hover:bg-red-50"
+                    >
+                        Cerrar Sesión
+                    </button>
+                </div>
 
                 <button
                     onClick={addEvent}
@@ -465,7 +490,7 @@ export default function AdminPage() {
                                 </button>
 
                                 <button
-                                    onClick={deleteEvent}
+                                    onClick={handleDeleteEvent}
                                     className="bg-red-50 text-red-600 hover:bg-red-100 font-medium px-6 py-3 rounded-lg border border-red-200 transition-colors ml-auto"
                                 >
                                     Eliminar
