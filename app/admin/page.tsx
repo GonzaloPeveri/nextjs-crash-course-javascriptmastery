@@ -327,41 +327,41 @@ export default function AdminPage() {
                                 {/* Basic Info */}
                                 <div className="space-y-4 md:col-span-2">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre (Title)</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Name (Title)</label>
                                         <input
                                             value={selectedEvent.title}
                                             onChange={(e) => updateField('title', e.target.value)}
                                             className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
-                                            placeholder="Ej: Curso de React Advanced..."
+                                            placeholder="Ex: Advanced React Course..."
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Resumen (Overview) *</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Summary (Overview) *</label>
                                         <textarea
                                             value={selectedEvent.overview || ''}
                                             onChange={(e) => updateField('overview', e.target.value)}
                                             rows={2}
                                             className="resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
-                                            placeholder="Breve resumen del evento..."
+                                            placeholder="Brief summary of the event..."
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa *</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Full Description *</label>
                                         <textarea
                                             value={selectedEvent.description || ''}
                                             onChange={(e) => updateField('description', e.target.value)}
                                             rows={5}
                                             className="resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3 w-full rounded-lg transition-all"
-                                            placeholder="Descripción detallada..."
+                                            placeholder="Detailed description..."
                                         />
                                     </div>
                                 </div>
 
                                 {/* Date and Time */}
                                 <div className="space-y-4">
-                                    <h3 className="font-medium text-gray-800 border-b pb-2">Fecha y Hora</h3>
+                                    <h3 className="font-medium text-gray-800 border-b pb-2">Date and Time</h3>
                                     <div>
-                                        <label className="block text-sm text-gray-600 mb-1">Fecha</label>
+                                        <label className="block text-sm text-gray-600 mb-1">Date</label>
                                         <input
                                             type="date"
                                             value={selectedEvent.date || ''}
@@ -370,7 +370,7 @@ export default function AdminPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-gray-600 mb-1">Hora (Ej: 18:00)</label>
+                                        <label className="block text-sm text-gray-600 mb-1">Time (Ex: 18:00)</label>
                                         <input
                                             type="time"
                                             value={selectedEvent.time || ''}
@@ -382,45 +382,45 @@ export default function AdminPage() {
 
                                 {/* Location */}
                                 <div className="space-y-4">
-                                    <h3 className="font-medium text-gray-800 border-b pb-2">Ubicación</h3>
+                                    <h3 className="font-medium text-gray-800 border-b pb-2">Location</h3>
                                     <div>
-                                        <label className="block text-sm text-gray-600 mb-1">Modalidad</label>
+                                        <label className="block text-sm text-gray-600 mb-1">Mode</label>
                                         <select
                                             value={selectedEvent.mode || 'online'}
                                             onChange={(e) => updateField('mode', e.target.value)}
                                             className="border border-gray-300 p-2.5 w-full rounded-lg bg-white"
                                         >
                                             <option value="online">Online</option>
-                                            <option value="offline">Presencial (Offline)</option>
-                                            <option value="hybrid">Híbrido</option>
+                                            <option value="offline">In-person (Offline)</option>
+                                            <option value="hybrid">Hybrid</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-gray-600 mb-1">Venue (Lugar)</label>
+                                        <label className="block text-sm text-gray-600 mb-1">Venue (Location)</label>
                                         <input
                                             value={selectedEvent.venue || ''}
                                             onChange={(e) => updateField('venue', e.target.value)}
                                             className="border border-gray-300 p-2.5 w-full rounded-lg"
-                                            placeholder="Ej: YouTube Live / Auditorio..."
+                                            placeholder="Ex: YouTube Live / Auditorium..."
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-gray-600 mb-1">Localización / Link</label>
+                                        <label className="block text-sm text-gray-600 mb-1">Location / Link</label>
                                         <input
                                             value={selectedEvent.location || ''}
                                             onChange={(e) => updateField('location', e.target.value)}
                                             className="border border-gray-300 p-2.5 w-full rounded-lg"
-                                            placeholder="Ej: Url de meet, o dirección..."
+                                            placeholder="Ex: Meet URL, or address..."
                                         />
                                     </div>
                                 </div>
 
                                 {/* Target & Organizers */}
                                 <div className="space-y-4 md:col-span-2">
-                                    <h3 className="font-medium text-gray-800 border-b pb-2">Detalles Adicionales</h3>
+                                    <h3 className="font-medium text-gray-800 border-b pb-2">Additional Details</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm text-gray-600 mb-1">Organizador</label>
+                                            <label className="block text-sm text-gray-600 mb-1">Organizer</label>
                                             <input
                                                 value={selectedEvent.organizer || ''}
                                                 onChange={(e) => updateField('organizer', e.target.value)}
@@ -428,7 +428,7 @@ export default function AdminPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-gray-600 mb-1">Audiencia (Audience)</label>
+                                            <label className="block text-sm text-gray-600 mb-1">Audience (Audience)</label>
                                             <input
                                                 value={selectedEvent.audience || ''}
                                                 onChange={(e) => updateField('audience', e.target.value)}
@@ -436,7 +436,7 @@ export default function AdminPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-gray-600 mb-1">Tags (Separados por coma)</label>
+                                            <label className="block text-sm text-gray-600 mb-1">Tags (Comma separated)</label>
                                             <input
                                                 value={selectedEvent.tags?.join(', ') || ''}
                                                 onChange={(e) => {
@@ -444,11 +444,11 @@ export default function AdminPage() {
                                                     updateField('tags', tags)
                                                 }}
                                                 className="border border-gray-300 p-2.5 w-full rounded-lg"
-                                                placeholder="Ej: react, frontend, web"
+                                                placeholder="Ex: react, frontend, web"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-gray-600 mb-1">Agenda (Separado por coma)</label>
+                                            <label className="block text-sm text-gray-600 mb-1">Agenda (Comma separated)</label>
                                             <input
                                                 value={selectedEvent.agenda?.join(', ') || ''}
                                                 onChange={(e) => {
@@ -456,7 +456,7 @@ export default function AdminPage() {
                                                     updateField('agenda', agenda)
                                                 }}
                                                 className="border border-gray-300 p-2.5 w-full rounded-lg"
-                                                placeholder="Ej: Bienvenida, Parte 1, Q&A"
+                                                placeholder="Ex: Welcome, Part 1, Q&A"
                                             />
                                         </div>
                                     </div>
@@ -477,23 +477,23 @@ export default function AdminPage() {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
-                                            Guardando...
+                                            Saving...
                                         </>
-                                    ) : 'Guardar Cambios'}
+                                    ) : 'Save Changes'}
                                 </button>
 
                                 <button
                                     onClick={toggleVisibility}
                                     className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium px-6 py-3 rounded-lg border border-gray-300 transition-colors"
                                 >
-                                    {selectedEvent.visible === false ? "Mostrar en la web" : "Ocultar en la web"}
+                                    {selectedEvent.visible === false ? "Show on web" : "Hide on web"}
                                 </button>
 
                                 <button
                                     onClick={handleDeleteEvent}
                                     className="bg-red-50 text-red-600 hover:bg-red-100 font-medium px-6 py-3 rounded-lg border border-red-200 transition-colors ml-auto"
                                 >
-                                    Eliminar
+                                    Delete
                                 </button>
                             </div>
 
@@ -503,7 +503,7 @@ export default function AdminPage() {
                 ) : (
                     <div className="h-full flex items-center justify-center text-gray-400 flex-col">
                         <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
-                        <p className="text-xl font-medium">Selecciona un evento para editarlo</p>
+                        <p className="text-xl font-medium">Select an event to edit</p>
                     </div>
                 )}
 
